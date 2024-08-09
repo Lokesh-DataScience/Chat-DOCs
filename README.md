@@ -6,7 +6,7 @@ Chat-DOCS is a python webapp for QnA with documents using Llama-3 model.
 
 ## Repository Contents
 
-- **aoo.py**: Python script that provides a graphical user interface (GUI) using Streamlit to demonstrate the chat-DOCs.
+- **app.py**: Python script that provides a graphical user interface (GUI) using Streamlit to demonstrate the chat-DOCs.
 - **requirements.txt**: List of Python libraries required to run `app.py`.
 
 ## Getting Started
