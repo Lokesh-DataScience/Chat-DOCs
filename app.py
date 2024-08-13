@@ -55,10 +55,6 @@ def get_vectorstore(text_chunks):
 
 def get_conversation_chain(vectorstore):
     memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
-    # llm = ChatOllama(
-    #     model="llama3",
-    #     temperature=0
-    # )
     llm = ChatGoogleGenerativeAI(
     model="gemini-1.5-pro",
     safety_settings={
