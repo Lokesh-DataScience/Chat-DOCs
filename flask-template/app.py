@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template, session, redirect, url_for, flash
 from flask_restful import Api, Resource
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
@@ -16,6 +16,7 @@ from langchain_google_genai import (
 import warnings
 warnings.filterwarnings("ignore")
 app = Flask(__name__)
+app.secret_key = 'e10210a3830943ca99a885bd2e971be9'
 api = Api(app)
 
 conversation = None  # Global variable for storing the conversation chain
@@ -24,7 +25,9 @@ conversation = None  # Global variable for storing the conversation chain
 def get_doc_text(documents):
     """Extracts text from PDF, DOCX, and TXT files."""
     text = ""
+    filenames=[]
     for doc in documents:
+        filenames.append(doc.filename)
         if doc.filename.endswith('.pdf'):
             doc_reader = PdfReader(doc)
             for page in doc_reader.pages:
@@ -35,6 +38,7 @@ def get_doc_text(documents):
                 text += para.text + "\n"
         elif doc.filename.endswith('.txt'):
             text += doc.read().decode("utf-8")
+    session['uploaded_files'] = filenames
     return text
 
 def get_text_chunks(text):
@@ -89,8 +93,8 @@ class ProcessDocuments(Resource):
         text_chunks = get_text_chunks(raw_text)
         vector_store = get_vectorstore(text_chunks)
         conversation = get_conversation_chain(vector_store)
-
-        return {"message": "Documents processed successfully!"}
+        flash("Documents processed successfully.", "success")
+        return redirect(url_for("home"))
 
 class AskQuestion(Resource):
     def post(self):
@@ -120,15 +124,21 @@ class AskQuestion(Resource):
                 for i, msg in enumerate(chat_history)
             ]
         }
+        
 
 # 🌐 HTML Page Routes
 @app.route("/")
 def home():
-    return render_template("home.html")
+    uploaded_files = session.get("uploaded_files", [])
+    return render_template("home.html",uploaded_files=uploaded_files)
 
 @app.route("/about")
 def about():
     return render_template("about.html")
+
+@app.route('/api/process-docs', methods=['POST'])
+def process():
+    return ProcessDocuments().post()
 
 # ✅ Register RESTful API Endpoints
 api.add_resource(ProcessDocuments, '/api/process-docs')

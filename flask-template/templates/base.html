@@ -8,11 +8,14 @@
     </head>
 
     <body>
-        <nav class="navbar">
-            <a href="{{ url_for('home') }}" class="navbar-brand">Home</a>
-            <a href="{{ url_for('about') }}" class="navbar-item">About</a>
+        {% block navbar %}
+        <nav>
+            <ul class="navbar">
+                <li><a href="{{ url_for('home') }}" class="navbar-brand">Home</a></li>
+                <li><a href="{{ url_for('about') }}" class="navbar-item">About</a></li>
+            </ul>
         </nav>
-
+        {% endblock navbar %}
         <div class="container">
             {% block content %}
             {% endblock %}

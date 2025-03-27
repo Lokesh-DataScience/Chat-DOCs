@@ -1,9 +1,8 @@
-<!-- filepath: d:\GenAI\Chat-DOCs\flask-template\templates\home.html -->
 {% extends 'base.html' %}
 
 {% block content %}
 <div class="chat-container">
-    
+
     <!-- Chat Box -->
     <div id="chat-box" class="chat-box"></div>
 
@@ -11,8 +10,8 @@
     <form id="chat-form" action="/api/ask" method="POST" class="chat-form">
         <div class="input-group">
             <input type="text" id="question" name="question" placeholder="Type a message..." required>
-            <button type="submit">
-                <i class="fas fa-paper-plane"></i>
+            <button type="submit" title="Send">
+                <i class="fas fa-paper-plane"></i> Send
             </button>
         </div>
     </form>
@@ -22,16 +21,29 @@
     <!-- Document Upload -->
     <div class="upload-container">
         <h2>Upload Documents</h2>
-        <form id="process-form" action="/api/process-docs" method="POST" enctype="multipart/form-data" class="upload-form">
+        
+        <form id="process-form" action="/api/process-docs" method="POST" enctype="multipart/form-data">
             <label for="documents" class="upload-label">Select Documents (PDF, DOCX, TXT):</label>
             <input type="file" id="documents" name="documents" multiple required>
             <button type="submit" id="process-btn" class="upload-btn">Process Documents</button>
-            <!-- Changed to type="button" -->
         </form>
+
+        <!-- Display uploaded files -->
+        <div class="uploaded-files">
+            <h3>Uploaded Files:</h3>
+            <ul>
+                {% if uploaded_files %}
+                    {% for file in uploaded_files %}
+                        <li>{{ file }}</li>
+                    {% endfor %}
+                {% else %}
+                    <li>No files uploaded yet.</li>
+                {% endif %}
+            </ul>
+        </div>
+
         <p id="process-status" class="status-message"></p>
     </div>
-    
-    
 </div>
 {% endblock %}
 
@@ -64,20 +76,26 @@
         }
     }
     
-    document.getElementById('process-btn').addEventListener('submit', async () => {  // Use "click" event
+    document.getElementById('process-form').addEventListener('submit', async (event) => {  // Use "click" event
+        event.preventDefault();
+        event.stopPropagation();
         const form = document.getElementById('process-form');
         const formData = new FormData(form);
 
         try {
-//            const response = await apiRequest(`${BASE_URL}/api/process-docs`, 'POST', formData, true);
-
-            if (response) {
-                const processStatus = document.getElementById('process-status');
-                processStatus.textContent = response.message;
-                alert('Documents processed successfully!'); 
+            const response = await fetch(`/api/process-docs`, {
+                method: 'POST',
+                body: formData
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
             }
+            const result = await response.json();
+
+            document.getElementById('process-status').textContent = result.message || 'Document processing complete!';
         } catch (error) {
             console.error('Failed:', error);
+            document.getElementById('process-status').textContent = 'Document processing failed!';
         }
     });
     
