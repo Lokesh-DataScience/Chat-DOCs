@@ -1,6 +1,7 @@
-from flask import Flask, request, render_template, session, redirect, url_for, flash
+from flask import Flask, request, render_template, session, redirect, url_for, flash, jsonify
 from flask_restful import Api, Resource
 from dotenv import load_dotenv
+from datetime import timedelta  # ✅ Add session lifetime management
 from PyPDF2 import PdfReader
 import docx
 from langchain.text_splitter import CharacterTextSplitter
@@ -15,9 +16,13 @@ from langchain_google_genai import (
 )
 import warnings
 warnings.filterwarnings("ignore")
+
 app = Flask(__name__)
 app.secret_key = 'e10210a3830943ca99a885bd2e971be9'
 api = Api(app)
+
+# ✅ Set session lifetime to 2 hours
+app.permanent_session_lifetime = timedelta(hours=2)
 
 conversation = None  # Global variable for storing the conversation chain
 
@@ -25,7 +30,8 @@ conversation = None  # Global variable for storing the conversation chain
 def get_doc_text(documents):
     """Extracts text from PDF, DOCX, and TXT files."""
     text = ""
-    filenames=[]
+    filenames = []
+
     for doc in documents:
         filenames.append(doc.filename)
         if doc.filename.endswith('.pdf'):
@@ -38,6 +44,7 @@ def get_doc_text(documents):
                 text += para.text + "\n"
         elif doc.filename.endswith('.txt'):
             text += doc.read().decode("utf-8")
+
     session['uploaded_files'] = filenames
     return text
 
@@ -81,18 +88,25 @@ class ProcessDocuments(Resource):
         """Processes uploaded documents and creates a conversation chain."""
         global conversation
 
+        session.permanent = True  # ✅ Make the session permanent
         if "documents" not in request.files:
-            return {"error": "No documents uploaded"}, 400
+            flash("No documents uploaded", "error")
+            return redirect(url_for("home"))
 
         documents = request.files.getlist("documents")
         raw_text = get_doc_text(documents)
 
         if not raw_text:
-            return {"error": "No text extracted from documents"}, 400
+            flash("No text extracted from documents", "error")
+            return redirect(url_for("home"))
 
         text_chunks = get_text_chunks(raw_text)
         vector_store = get_vectorstore(text_chunks)
         conversation = get_conversation_chain(vector_store)
+
+        # ✅ Initialize empty chat history in session
+        session['chat_history'] = []
+
         flash("Documents processed successfully.", "success")
         return redirect(url_for("home"))
 
@@ -101,6 +115,7 @@ class AskQuestion(Resource):
         """Handles question asking and returns the chat history."""
         global conversation
 
+        session.permanent = True  # ✅ Make the session permanent
         if not conversation:
             return {"error": "No conversation initialized. Please process documents first."}, 400
 
@@ -117,20 +132,21 @@ class AskQuestion(Resource):
         response = conversation({'question': question})
         chat_history = response['chat_history']
 
-        return {
-            "response": chat_history[-1].content,
-            "chat_history": [
-                {"user": msg.content} if i % 2 == 0 else {"bot": msg.content}
-                for i, msg in enumerate(chat_history)
-            ]
-        }
-        
+        if 'chat_history' not in session:
+            session['chat_history'] = []
+
+        session['chat_history'].append({'user': question, 'bot': chat_history[-1].content})
+
+        # ✅ Redirect to home with updated chat history
+        return redirect(url_for("home"))
 
 # 🌐 HTML Page Routes
 @app.route("/")
 def home():
+    session.permanent = True  # ✅ Make the session permanent
     uploaded_files = session.get("uploaded_files", [])
-    return render_template("home.html",uploaded_files=uploaded_files)
+    chat_history = session.get("chat_history", [])
+    return render_template("home.html", uploaded_files=uploaded_files, chat_history=chat_history)
 
 @app.route("/about")
 def about():
@@ -139,6 +155,10 @@ def about():
 @app.route('/api/process-docs', methods=['POST'])
 def process():
     return ProcessDocuments().post()
+
+@app.route('/api/ask', methods=['POST'])
+def ask():
+    return AskQuestion().post()
 
 # ✅ Register RESTful API Endpoints
 api.add_resource(ProcessDocuments, '/api/process-docs')

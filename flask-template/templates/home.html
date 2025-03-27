@@ -4,7 +4,18 @@
 <div class="chat-container">
 
     <!-- Chat Box -->
-    <div id="chat-box" class="chat-box"></div>
+    <div id="chat-box" class="chat-box">
+        {% for msg in chat_history %}
+            <div class="message user-message">
+                <p><strong>You:</strong> {{ msg.user }}</p>
+                <span class="timestamp">{{ loop.index }}</span>
+            </div>
+            <div class="message bot-message">
+                <p><strong>Bot:</strong> {{ msg.bot }}</p>
+                <span class="timestamp">{{ loop.index }}</span>
+            </div>
+        {% endfor %}
+    </div>
 
     <!-- Chat Input -->
     <form id="chat-form" action="/api/ask" method="POST" class="chat-form">
@@ -28,17 +39,14 @@
             <button type="submit" id="process-btn" class="upload-btn">Process Documents</button>
         </form>
 
-        <!-- Display uploaded files -->
         <div class="uploaded-files">
             <h3>Uploaded Files:</h3>
             <ul>
-                {% if uploaded_files %}
-                    {% for file in uploaded_files %}
-                        <li>{{ file }}</li>
-                    {% endfor %}
+                {% for file in uploaded_files %}
+                    <li>{{ file }}</li>
                 {% else %}
                     <li>No files uploaded yet.</li>
-                {% endif %}
+                {% endfor %}
             </ul>
         </div>
 
@@ -46,6 +54,7 @@
     </div>
 </div>
 {% endblock %}
+
 
 {% block scripts %}
 <script>
