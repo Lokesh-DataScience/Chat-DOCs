@@ -1,7 +1,7 @@
 from flask import Flask, request, render_template, session, redirect, url_for, flash, jsonify
 from flask_restful import Api, Resource
 from dotenv import load_dotenv
-from datetime import timedelta  # ✅ Add session lifetime management
+from datetime import timedelta
 from PyPDF2 import PdfReader
 import docx
 from langchain.text_splitter import CharacterTextSplitter
@@ -15,16 +15,15 @@ from langchain_google_genai import (
     HarmCategory,
 )
 import warnings
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", message=".*LangChainDeprecationWarning.*")
+import os
 
 app = Flask(__name__)
-app.secret_key = 'e10210a3830943ca99a885bd2e971be9'
+app.secret_key = os.getenv('SECRET_KEY')
 api = Api(app)
-
-# ✅ Set session lifetime to 2 hours
 app.permanent_session_lifetime = timedelta(hours=2)
 
-conversation = None  # Global variable for storing the conversation chain
+conversation = None 
 
 # 📌 Helper functions
 def get_doc_text(documents):
@@ -88,7 +87,7 @@ class ProcessDocuments(Resource):
         """Processes uploaded documents and creates a conversation chain."""
         global conversation
 
-        session.permanent = True  # ✅ Make the session permanent
+        session.permanent = True 
         if "documents" not in request.files:
             flash("No documents uploaded", "error")
             return redirect(url_for("home"))
@@ -103,8 +102,6 @@ class ProcessDocuments(Resource):
         text_chunks = get_text_chunks(raw_text)
         vector_store = get_vectorstore(text_chunks)
         conversation = get_conversation_chain(vector_store)
-
-        # ✅ Initialize empty chat history in session
         session['chat_history'] = []
 
         flash("Documents processed successfully.", "success")
@@ -115,11 +112,10 @@ class AskQuestion(Resource):
         """Handles question asking and returns the chat history."""
         global conversation
 
-        session.permanent = True  # ✅ Make the session permanent
+        session.permanent = True 
         if not conversation:
             return {"error": "No conversation initialized. Please process documents first."}, 400
 
-        # Handle form and JSON-based requests
         if request.content_type == "application/json":
             data = request.get_json()
             question = data.get("question")
@@ -136,14 +132,11 @@ class AskQuestion(Resource):
             session['chat_history'] = []
 
         session['chat_history'].append({'user': question, 'bot': chat_history[-1].content})
-
-        # ✅ Redirect to home with updated chat history
         return redirect(url_for("home"))
 
-# 🌐 HTML Page Routes
 @app.route("/")
 def home():
-    session.permanent = True  # ✅ Make the session permanent
+    session.permanent = True
     uploaded_files = session.get("uploaded_files", [])
     chat_history = session.get("chat_history", [])
     return render_template("home.html", uploaded_files=uploaded_files, chat_history=chat_history)
@@ -160,10 +153,10 @@ def process():
 def ask():
     return AskQuestion().post()
 
-# ✅ Register RESTful API Endpoints
 api.add_resource(ProcessDocuments, '/api/process-docs')
 api.add_resource(AskQuestion, '/api/ask')
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     load_dotenv()
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
+
