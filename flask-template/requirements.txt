@@ -1,1 +1,11 @@
 flask
+flask-restful
+flask-session
+langchain
+langchain_community
+langchain_huggingface
+PyPDF2
+python-dotenv
+faiss-cpu
+python-docx
+langchain-google-genai

@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: chat-docs              
+    runtime: docker
+    repo: https://github.com/Lokesh-DataScience/Chat-DOCs
+    plan: free                     
+    envVars:
+      - key: GOOGLE_API_KEY        
+        value: YOUR_GOOGLE_API_KEY
+    dockerfilePath: ./Dockerfile  
+    region: oregon           
+    branch: master
+    autoDeploy: true            
+    healthCheckPath: /
+    env: docker
