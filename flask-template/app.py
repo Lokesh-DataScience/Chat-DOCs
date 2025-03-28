@@ -15,7 +15,7 @@ from langchain_google_genai import (
     HarmCategory,
 )
 import warnings
-warnings.filterwarnings("ignore", message=".*LangChainDeprecationWarning.*")
+warnings.filterwarnings("ignore")
 import os
 
 app = Flask(__name__)
