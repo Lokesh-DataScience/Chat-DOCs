@@ -2,6 +2,7 @@ services:
   - type: web
     name: chat-docs              
     runtime: docker
+    dockerfilePath: ./flask-template/Dockerfile
     repo: https://github.com/Lokesh-DataScience/Chat-DOCs
     plan: free                     
     envVars:
