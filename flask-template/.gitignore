@@ -6,6 +6,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+chat-docs-432213-1d571c2cb42f.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -15,3 +16,4 @@ __pycache__/
 # Flask stuff:
 instance/
 .webassets-cache
+
