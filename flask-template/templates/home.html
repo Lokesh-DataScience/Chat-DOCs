@@ -56,8 +56,10 @@
 
 {% block scripts %}
 <script>
-    const BASE_URL = window.location.origin;  // Use this globally for all requests
-
+    const LOCAL_URL = 'http://localhost:5000';       
+    const RENDER_URL = 'https://chat-docs-w719.onrender.com';    
+    const BASE_URL = window.location.hostname === 'localhost' ? LOCAL_URL : RENDER_URL;
+    
     // ✅ Helper function for API calls
     async function apiRequest(url, method = 'GET', body = null, isFormData = false) {
         try {
