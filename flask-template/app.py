@@ -11,6 +11,7 @@ from services.Process_Ask import ProcessDocuments, AskQuestion
 SERVICE_ACCOUNT_PATH = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", ".\chat-docs-432213-1d571c2cb42f.json")
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = SERVICE_ACCOUNT_PATH
 
+
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY','dev_secret_key')
 api = Api(app)
