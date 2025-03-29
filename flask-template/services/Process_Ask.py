@@ -1,46 +1,47 @@
-from flask import request, session, redirect, url_for, flash
+from flask import request, jsonify
 from flask_restful import Resource
 from utils.text_chunks import get_doc_text, get_text_chunks
 from utils.vector_db import get_vectorstore
 from utils.conversation_chains import get_conversation_chain
-conversation = None 
+
+# Global variable for conversation chain
+conversation = None
+
 class ProcessDocuments(Resource):
     def post(self):
         """Processes uploaded documents and creates a conversation chain."""
         global conversation
 
-        session.permanent = True 
+        # Check if files are uploaded
         if "documents" not in request.files:
-            flash("No documents uploaded", "error")
-            return redirect(url_for("home"))
+            return jsonify({"error": "No documents uploaded"}), 400
 
         documents = request.files.getlist("documents")
-        raw_text, filenames = get_doc_text(documents) 
+        raw_text, filenames = get_doc_text(documents)
 
         if not raw_text:
-            flash("No text extracted from documents", "error")
-            return redirect(url_for("home"))
+            return jsonify({"error": "No text extracted from documents"}), 400
 
+        # Create text chunks and vector store
         text_chunks = get_text_chunks(raw_text)
         vector_store = get_vectorstore(text_chunks)
         conversation = get_conversation_chain(vector_store)
 
-        session['uploaded_files'] = filenames
-        session['chat_history'] = []
+        return jsonify({
+            "message": "Documents processed successfully",
+            "files": filenames
+        }), 200
 
-        flash("Documents processed", "success")
-        return redirect(url_for("home"))
-    
+
 class AskQuestion(Resource):
     def post(self):
         """Handles question asking and returns the chat history."""
         global conversation
 
-        session.permanent = True 
         if not conversation:
-            flash("No documents processed yet", "error")
-            return redirect(url_for("home")) 
+            return jsonify({"error": "No documents processed yet"}), 400
 
+        # Handle both JSON and form data inputs
         if request.content_type == "application/json":
             data = request.get_json()
             question = data.get("question")
@@ -48,13 +49,13 @@ class AskQuestion(Resource):
             question = request.form.get("question")
 
         if not question:
-            return {"error": "No question provided"}, 400
+            return jsonify({"error": "No question provided"}), 400
 
+        # Get response from conversation chain
         response = conversation({'question': question})
         chat_history = response['chat_history']
 
-        if 'chat_history' not in session:
-            session['chat_history'] = []
-
-        session['chat_history'].append({'user': question, 'bot': chat_history[-1].content})
-        return redirect(url_for("home"))
+        return jsonify({
+            "question": question,
+            "response": chat_history[-1].content
+        }), 200

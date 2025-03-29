@@ -1,5 +1,5 @@
 services:
-  flask-app:
+  backend-api:
     build: .
     ports:
       - "5000:5000"
@@ -9,8 +9,5 @@ services:
     environment:
       FLASK_ENV: production
       PYTHONUNBUFFERED: 1
-      FLASK_RUN_HOST: 0.0.0.0
-      FLASK_RUN_PORT: 5000
       GOOGLE_APPLICATION_CREDENTIALS: "/app/chat-docs-432213-1d571c2cb42f.json"
-    command: >
-      uvicorn app:asgi_app --host 0.0.0.0 --port 5000
+    command: waitress-serve --host 0.0.0.0 --port 5000 app:app
