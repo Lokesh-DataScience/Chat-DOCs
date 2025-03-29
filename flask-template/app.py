@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import warnings
 import os
 from services.Process_Ask import ProcessDocuments, AskQuestion
+from asgiref.wsgi import WsgiToAsgi  # ASGI wrapper for Flask
 
 # Load environment variables
 load_dotenv()
@@ -20,6 +21,9 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev_secret_key')
 api = Api(app)
 app.permanent_session_lifetime = timedelta(hours=2)
+
+# Wrap the Flask app with ASGI compatibility
+asgi_app = WsgiToAsgi(app)
 
 # Routes
 @app.route("/")
@@ -44,3 +48,8 @@ def ask():
 # Flask-RESTful Endpoints
 api.add_resource(ProcessDocuments, '/api/process-docs')
 api.add_resource(AskQuestion, '/api/ask')
+
+# Uvicorn entry point
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app:asgi_app", host="0.0.0.0", port=5000, log_level="info", access_log=True)

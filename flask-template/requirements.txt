@@ -9,5 +9,6 @@ python-dotenv
 faiss-cpu
 python-docx
 langchain-google-genai
-gunicorn
+uvicorn
+asgiref
 google-cloud-storage
