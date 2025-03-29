@@ -10,3 +10,4 @@ faiss-cpu
 python-docx
 langchain-google-genai
 waitress
+google-cloud-storage

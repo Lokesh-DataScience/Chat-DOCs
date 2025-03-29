@@ -1,9 +1,9 @@
 from flask import Flask, request, render_template, session, redirect, url_for, flash, jsonify
 from flask_restful import Api, Resource
-from dotenv import load_dotenv
 from datetime import timedelta
 from PyPDF2 import PdfReader
 import docx
+from dotenv import load_dotenv
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
@@ -17,9 +17,28 @@ from langchain_google_genai import (
 import warnings
 warnings.filterwarnings("ignore")
 import os
+from google.auth import exceptions
+from google.cloud import storage
+
+# Use environment variable for service account path
+SERVICE_ACCOUNT_PATH = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", ".\chat-docs-432213-1d571c2cb42f.json")
+
+# Verify the file exists
+if not os.path.exists(SERVICE_ACCOUNT_PATH):
+    print("Service account file not found!")
+
+# Set the credentials path
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = SERVICE_ACCOUNT_PATH
+
+# Example: Initialize Google Cloud Storage client
+try:
+    storage_client = storage.Client()
+    print("Google Cloud authenticated successfully!")
+except exceptions.DefaultCredentialsError as e:
+    print(f"Failed to authenticate: {e}")
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY')
+app.secret_key = os.getenv('SECRET_KEY','dev_secret_key')
 api = Api(app)
 app.permanent_session_lifetime = timedelta(hours=2)
 
