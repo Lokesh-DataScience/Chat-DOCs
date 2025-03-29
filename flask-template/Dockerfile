@@ -16,4 +16,6 @@ COPY . .
 ENV GOOGLE_APPLICATION_CREDENTIALS="/app/chat-docs-credentials.json"
 
 # Start the server
-CMD ["waitress-serve", "--host", "0.0.0.0", "--port", "5000", "app:app"]
+CMD ["gunicorn", "wsgi:app", "--bind", "0.0.0.0:5000", "--workers", "3", "--access-logfile", "-"]
+
+
